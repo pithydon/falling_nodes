@@ -36,10 +36,14 @@ API:
 
 This mod adds some groups that can be added to the node definition of your nodes.
 
-* **falling_hanging_node** "Will fall if no walkable node is below and above."
+* **falling_hanging_node** "Will fall if no walkable node is below and above. Use any positive group rating to use."
 
-* **falling_sticky_node** "Will fall if no walkable node is touching faces."
+* **falling_sticky_node** "Will fall if no walkable node is touching faces. Use any positive group rating to use."
 
-* **falling_kill_node** "Will kill players if it lands on their heads."
+* **falling_kill_node** "Will kill players if it lands on their heads. Use any positive group rating to use."
+
+* **falling_damage_node** "Will damage players if it lands on their heads. Damage equals group rating."
+
+Nodes in group falling_kill_node or falling_damage_node need to be in group falling_node, falling_hanging_node, or falling_sticky_node to fall.
 
 [pithydon]: <https://github.com/pithydon>
