@@ -1,4 +1,4 @@
-falling_nodes by [pithydon] 2016
+falling_nodes
 
 Adds more ways for nodes to fall.
 
@@ -45,5 +45,3 @@ This mod adds some groups that can be added to the node definition of your nodes
 * **falling_damage_node** "Will damage players if it lands on their heads. Damage equals group rating."
 
 Nodes in group falling_kill_node or falling_damage_node need to be in group falling_node, falling_hanging_node, or falling_sticky_node to fall.
-
-[pithydon]: <https://github.com/pithydon>

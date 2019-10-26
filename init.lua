@@ -3,8 +3,7 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 		local above = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
 		local below = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
 		if not minetest.registered_nodes[above.name].walkable and not minetest.registered_nodes[below.name].walkable then
-			minetest.remove_node(pos)
-			spawn_falling_node(pos, newnode)
+			minetest.spawn_falling_node(pos)
 		end
 	elseif minetest.get_item_group(newnode.name, "falling_sticky_node") ~= 0 then
 		local pos_table = {
@@ -20,8 +19,7 @@ minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack
 			end
 		end
 		if fall then
-			minetest.remove_node(pos)
-			spawn_falling_node(pos, newnode)
+			minetest.spawn_falling_node(pos)
 		end
 	end
 end)
@@ -30,8 +28,7 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	local under = {x = pos.x, y = pos.y - 1, z = pos.z}
 	local node = minetest.get_node(under)
 	if minetest.get_item_group(node.name, "falling_hanging_node") ~= 0 then
-		minetest.remove_node(under)
-		spawn_falling_node(under, node)
+		minetest.spawn_falling_node(under)
 	end
 	local above = {x = pos.x, y = pos.y + 1, z = pos.z}
 	local node = minetest.get_node(above)
@@ -39,8 +36,7 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 		local above_above = {x = pos.x, y = pos.y + 2, z = pos.z}
 		local above_node = minetest.get_node(above_above)
 		if not minetest.registered_nodes[above_node.name].walkable then
-			minetest.remove_node(above)
-			spawn_falling_node(above, node)
+			minetest.spawn_falling_node(above)
 		end
 	end
 	local pos_table = {
@@ -72,9 +68,7 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 			end
 		end
 		if fall then
-			local node = minetest.get_node(v)
-			minetest.remove_node(v)
-			spawn_falling_node(v, node)
+			minetest.spawn_falling_node(v)
 		end
 	end
 end)
@@ -84,14 +78,12 @@ if minetest.setting_getbool("enable_damage") then
 	local on_step_old = falling_node.on_step
 	local on_step_add = function(self, dtime)
 		local node = minetest.registered_nodes[self.node.name]
-		local kill = false
 		if minetest.get_item_group(node.name, "falling_kill_node") ~= 0 then
 			local pos = self.object:getpos()
 			local objs = minetest.get_objects_inside_radius(pos, 1)
 			for _,v in ipairs(objs) do
 				if v:is_player() and v:get_hp() ~= 0 then
 					v:set_hp(0)
-					kill = true
 				end
 			end
 		else
@@ -119,22 +111,10 @@ if minetest.setting_getbool("enable_damage") then
 								hp = 0
 							end
 							v:set_hp(hp)
-							if hp == 0 then
-								kill = true
-							end
 						end
 					end
 				end
 			end
-		end
-		if kill then
-			local pos = self.object:getpos()
-			local pos = {x = pos.x, y = pos.y + 0.3, z = pos.z}
-			if minetest.registered_nodes[self.node.name] then
-				minetest.add_node(pos, self.node)
-			end
-			self.object:remove()
-			nodeupdate(pos)
 		end
 	end
 	local on_step_table = {on_step_old, on_step_add}
