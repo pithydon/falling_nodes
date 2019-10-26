@@ -78,12 +78,14 @@ if minetest.setting_getbool("enable_damage") then
 	local on_step_old = falling_node.on_step
 	local on_step_add = function(self, dtime)
 		local node = minetest.registered_nodes[self.node.name]
+		local kill = false
 		if minetest.get_item_group(node.name, "falling_kill_node") ~= 0 then
 			local pos = self.object:getpos()
 			local objs = minetest.get_objects_inside_radius(pos, 1)
 			for _,v in ipairs(objs) do
 				if v:is_player() and v:get_hp() ~= 0 then
 					v:set_hp(0)
+					kill = true
 				end
 			end
 		else
@@ -111,10 +113,22 @@ if minetest.setting_getbool("enable_damage") then
 								hp = 0
 							end
 							v:set_hp(hp)
+							if hp == 0 then
+								kill = true
+							end
 						end
 					end
 				end
 			end
+		end
+		if kill then
+			local pos = self.object:getpos()
+			local pos = {x = pos.x, y = pos.y + 0.3, z = pos.z}
+			if minetest.registered_nodes[self.node.name] then
+				minetest.add_node(pos, self.node)
+			end
+			self.object:remove()
+			minetest.check_for_falling(pos)
 		end
 	end
 	local on_step_table = {on_step_old, on_step_add}
