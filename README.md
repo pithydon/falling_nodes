@@ -38,7 +38,7 @@ This mod adds some groups that can be added to the node definition of your nodes
 
 * **falling_hanging_node** "Will fall if no walkable node is below and above. Use any positive group rating to use."
 
-* **falling_sticky_node** "Will fall if no walkable node is touching faces. Use any positive group rating to use."
+* **falling_sticky_node** "Will fall if less walkable node faces are touching than group number. Use numbers 1 through 5."
 
 * **falling_kill_node** "Will kill players if it lands on their heads. Use any positive group rating to use."
 

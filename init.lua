@@ -1,76 +1,57 @@
-minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
-	if minetest.get_item_group(newnode.name, "falling_hanging_node") ~= 0 then
+local check_fall = function(pos, node)
+	local below = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
+	if minetest.registered_nodes[below.name].walkable or
+			(minetest.get_item_group(node.name, "float") ~= 0 and minetest.registered_nodes[below.name].liquidtype ~= "none") then
+		return false
+	end
+	if minetest.get_item_group(node.name, "falling_hanging_node") ~= 0 then
 		local above = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
-		local below = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
-		if not minetest.registered_nodes[above.name].walkable and not minetest.registered_nodes[below.name].walkable then
-			minetest.spawn_falling_node(pos)
+		if not minetest.registered_nodes[above.name].walkable then
+			return minetest.spawn_falling_node(pos)
+		else
+			return false
 		end
-	elseif minetest.get_item_group(newnode.name, "falling_sticky_node") ~= 0 then
+	end
+	local falling_sticky_node = minetest.get_item_group(node.name, "falling_sticky_node")
+	if falling_sticky_node ~= 0 then
 		local pos_table = {
 			{x = pos.x - 1, y = pos.y, z = pos.z}, {x = pos.x + 1, y = pos.y, z = pos.z},
-			{x = pos.x, y = pos.y - 1, z = pos.z}, {x = pos.x, y = pos.y + 1, z = pos.z},
+			{x = pos.x, y = pos.y + 1, z = pos.z},
 			{x = pos.x, y = pos.y, z = pos.z - 1}, {x = pos.x, y = pos.y, z = pos.z + 1}
 		}
-		local fall = true
+		local connect = 0
 		for _,v in ipairs(pos_table) do
 			local node = minetest.get_node(v)
 			if minetest.registered_nodes[node.name].walkable then
-				fall = false
+				connect = connect + 1
 			end
 		end
-		if fall then
-			minetest.spawn_falling_node(pos)
+		if connect < falling_sticky_node then
+			return minetest.spawn_falling_node(pos)
+		else
+			return false
 		end
+	end
+end
+
+minetest.register_on_placenode(function(pos, newnode)
+	check_fall(pos, newnode)
+end)
+
+minetest.register_on_dignode(function(pos)
+	local pos_table = {
+		{x = pos.x - 1, y = pos.y, z = pos.z}, {x = pos.x + 1, y = pos.y, z = pos.z},
+		{x = pos.x, y = pos.y - 1, z = pos.z}, {x = pos.x, y = pos.y + 1, z = pos.z},
+		{x = pos.x, y = pos.y, z = pos.z - 1}, {x = pos.x, y = pos.y, z = pos.z + 1}
+	}
+	for _,v in ipairs(pos_table) do
+		local node = minetest.get_node(v)
+		check_fall(v, node)
 	end
 end)
 
-minetest.register_on_dignode(function(pos, oldnode, digger)
-	local under = {x = pos.x, y = pos.y - 1, z = pos.z}
-	local node = minetest.get_node(under)
-	if minetest.get_item_group(node.name, "falling_hanging_node") ~= 0 then
-		minetest.spawn_falling_node(under)
-	end
-	local above = {x = pos.x, y = pos.y + 1, z = pos.z}
-	local node = minetest.get_node(above)
-	if minetest.get_item_group(node.name, "falling_hanging_node") ~= 0 then
-		local above_above = {x = pos.x, y = pos.y + 2, z = pos.z}
-		local above_node = minetest.get_node(above_above)
-		if not minetest.registered_nodes[above_node.name].walkable then
-			minetest.spawn_falling_node(above)
-		end
-	end
-	local pos_table = {
-		{x = pos.x - 1, y = pos.y, z = pos.z}, {x = pos.x + 1, y = pos.y, z = pos.z},
-		under, above,
-		{x = pos.x, y = pos.y, z = pos.z - 1}, {x = pos.x, y = pos.y, z = pos.z + 1}
-	}
-	local node_table = {}
-	for i,v in ipairs(pos_table) do
-		node_table[i] = minetest.get_node(v)
-	end
-	local falling_nodes = {}
-	for i,v in ipairs(node_table) do
-		if minetest.get_item_group(v.name, "falling_sticky_node") ~= 0 then
-			table.insert(falling_nodes, pos_table[i])
-		end
-	end
-	for _,v in ipairs(falling_nodes) do
-		local pos_table = {
-			{x = v.x - 1, y = v.y, z = v.z}, {x = v.x + 1, y = v.y, z = v.z},
-			{x = v.x, y = v.y - 1, z = v.z}, {x = v.x, y = v.y + 1, z = v.z},
-			{x = v.x, y = v.y, z = v.z - 1}, {x = v.x, y = v.y, z = v.z + 1}
-		}
-		local fall = true
-		for _,v in ipairs(pos_table) do
-			local node = minetest.get_node(v)
-			if minetest.registered_nodes[node.name].walkable then
-				fall = false
-			end
-		end
-		if fall then
-			minetest.spawn_falling_node(v)
-		end
-	end
+minetest.register_on_punchnode(function(pos, node)
+	check_fall(pos, node)
 end)
 
 if minetest.setting_getbool("enable_damage") then
@@ -121,6 +102,7 @@ if minetest.setting_getbool("enable_damage") then
 				end
 			end
 		end
+		-- This part is needed to play nicely with players bones.
 		if kill then
 			local pos = self.object:getpos()
 			local pos = {x = pos.x, y = pos.y + 0.3, z = pos.z}
