@@ -1,12 +1,13 @@
 local check_fall = function(pos, node)
 	local below = minetest.get_node({x = pos.x, y = pos.y - 1, z = pos.z})
-	if minetest.registered_nodes[below.name].walkable or
-			(minetest.get_item_group(node.name, "float") ~= 0 and minetest.registered_nodes[below.name].liquidtype ~= "none") then
+	local node_def = minetest.registered_nodes[below.name]
+	if not node_def or node_def.walkable or (minetest.get_item_group(node.name, "float") ~= 0 and node_def.liquidtype ~= "none") then
 		return false
 	end
 	if minetest.get_item_group(node.name, "falling_hanging_node") ~= 0 then
 		local above = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z})
-		if not minetest.registered_nodes[above.name].walkable then
+		local node_def = minetest.registered_nodes[above.name]
+		if node_def and not node_def.walkable then
 			return minetest.spawn_falling_node(pos)
 		else
 			return false
@@ -22,7 +23,8 @@ local check_fall = function(pos, node)
 		local connect = 0
 		for _,v in ipairs(pos_table) do
 			local node = minetest.get_node(v)
-			if minetest.registered_nodes[node.name].walkable then
+			local node_def = minetest.registered_nodes[node.name]
+			if not node_def or node_def.walkable then
 				connect = connect + 1
 			end
 		end
